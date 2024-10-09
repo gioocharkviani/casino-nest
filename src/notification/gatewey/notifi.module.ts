@@ -1,8 +1,12 @@
-import { Module } from '@nestjs/common';
-import { NotifiGatewey } from './notifi.gatewey';
+import { Module } from "@nestjs/common";
+import { NotifiGateway } from "./notifi.gatewey";
+import { UserService } from "src/user/user.service";
+import { NotificationService } from "../notification.service";
+import { NotificationModule } from "../notification.module";
 
 @Module({
-  providers: [NotifiGatewey],
-  exports: [NotifiGatewey]
+  imports: [],
+  providers: [NotifiGateway, UserService],
+  exports: [NotifiGateway],
 })
 export class NotifiModule {}

@@ -22,6 +22,7 @@ model Notification {
   readAt      DateTime?
   trigerAt    DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime @default(now())
   @@index([recipientId])
 }
 

@@ -1,36 +1,60 @@
-import { SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+} from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-
+import { UserService } from "src/user/user.service";
 
 @WebSocketGateway({
-    cors: {
-        origin: 'http://127.0.0.1:5500',
-        methods: ['GET', 'POST'],
-        credentials: true,
-    },
+  cors: {
+    origin: "*",
+  },
 })
+export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  constructor(readonly userService: UserService) {}
+  @WebSocketServer()
+  server: Server;
 
-export class NotifiGatewey {
-    @WebSocketServer()
-    server: Server;
+  private clients: Map<string, Socket> = new Map();
 
-    async handleConnection(client: Socket) {
-        console.log('Client connected:', client.id);
+  // Handle new client connections
+  handleConnection(client: Socket) {
+    const userId = client.handshake.query.userId as string;
+    console.log(`Client connected: ${userId}`);
+
+    // Store the client by userId
+    if (userId) {
+      this.clients.set(userId, client);
     }
-    async handleDisconnect(client: Socket) {
-        console.log('Client disconnected:', client.id);
-    }
+  }
 
-    @SubscribeMessage('notification')
-    async handleJoin(client: Socket, recipientId: string) {
-        client.join(recipientId);
-        console.log(`Client ${client.id} joined room ${recipientId}`);
-    }
+  // Handle client disconnections
+  handleDisconnect(client: Socket) {
+    const userId = client.handshake.query.userId as string;
+    console.log(`Client disconnected: ${userId}`);
 
-    async sendNotification(recipientId: string, notification: any) {
-        console.log(`Sending notification to room ${recipientId}`);
-        this.server.to(recipientId).emit('newNotification', notification);
+    // Remove the client when they disconnect
+    if (userId) {
+      this.clients.delete(userId);
     }
-  
+  }
 
+  // Method to send notifications to a specific user
+  sendNotification(userId: string, notification: any) {
+    const client = this.clients.get(userId);
+    if (client) {
+      client.emit("notification", notification);
+    }
+  }
+
+  //Subscribe notificatio MARK AS READ
+  //Subscribe notification MARK AS READ
+  @SubscribeMessage("markAsRead")
+  handleMarkAsRead(client: Socket, notificationId: string) {
+    const userId = client.handshake.query.userId as string;
+    console.log(`User ${userId} marked notification ${notificationId} as read.`);
+  }
 }

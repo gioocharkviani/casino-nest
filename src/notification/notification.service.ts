@@ -1,176 +1,262 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import { CreateNotificationDto } from './dto/createnotifi.dto';
-import { NotifiGatewey } from './gatewey/notifi.gatewey';
-import { Request } from 'express';
-import { UserService } from 'src/user/user.service';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import { CreateNotificationDto } from "./dto/createnotifi.dto";
+import { NotifiGateway } from "./gatewey/notifi.gatewey";
+import { Request } from "express";
+import { UserService } from "src/user/user.service";
+import { Role } from "src/auth/enums/roles.enum";
 
 @Injectable()
 export class NotificationService {
-    constructor(
-        private readonly prismaService: PrismaService,
-        private readonly notifiGatewey: NotifiGatewey,
-        private readonly userService:UserService,
-    ) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notifiGatewey: NotifiGateway,
+    private readonly userService: UserService,
+  ) {}
 
-// GET ALL NOTIFICATION BY ROLES
-async getAllNotifications(req: Request) {
+  // GET ALL NOTIFICATION BY ROLED USERS
+  async getAllNotificationRoled(req: Request) {
     const user = await this.userService.getCurrentUser(req);
-    
     if (!user) {
-        throw new UnauthorizedException('Unauthorized');
+      throw new UnauthorizedException("Unauthorized");
     }
 
-    const userRole = user.roles[0]?.name;
-    const userId = user.id.toString();
-    // Extract query parameters for pagination and sorting
-    const { page = 1, per_page = 10, sort_by = 'createdAt', sort_direction = 'desc' } = req.query;
+    // Extract query parameters for pagination, sorting, and searching
+    const {
+      page = 1,
+      per_page = 10,
+      sort_by = "createdAt",
+      sort_direction = "desc",
+      search = "",
+    } = req.query;
+
+    // If sort_by is empty, use 'createdAt' as the default
+    const sortByField = sort_by === "" ? "createdAt" : sort_by;
+
     const take = parseInt(per_page as string, 10);
     const skip = (parseInt(page as string, 10) - 1) * take;
 
-    
-    // Check if user has not a role
-    if (!userRole) {
-        const notificationData = await this.prismaService.notification.findMany({
-            where: { recipientId: userId },
-            skip,
-            take,
-            orderBy: {
-                [sort_by as string]: sort_direction === 'asc' ? 'asc' : 'desc',
-            },
-        });
-        
-        const totalNotifications = await this.prismaService.notification.count({
-            where: { recipientId: userId },
-        });
-        
-        const dataObject = {
-            data: notificationData,
-            meta: {
-                page: parseInt(page as string, 10),
-                per_page: take,
-                total: totalNotifications,
-                total_pages: Math.ceil(totalNotifications / take),
-            },
-        };
+    const { ip } = req;
 
-        return dataObject;
-    }
-    // Check if user has not a role
+    const ADMIN_FRONT_IP = "*";
 
-    // Check if user has ROLE
- 
-        const notificationData = await this.prismaService.notification.findMany({
-            skip,
-            take,
-            orderBy: {
-                [sort_by as string]: sort_direction === 'asc' ? 'asc' : 'desc',
-            },
-        });
-        
-        const totalNotifications = await this.prismaService.notification.count();
-        
-        const dataObject = {
-            data: notificationData,
-            meta: {
-                page: parseInt(page as string, 10),
-                per_page: take,
-                total: totalNotifications,
-                total_pages: Math.ceil(totalNotifications / take),
-            },
-        };
+    const searchFilter = search
+      ? {
+          OR: [
+            { content: { contains: search as string } },
+            { recipientId: { contains: search as string } },
+          ],
+        }
+      : {};
 
-        return dataObject;
-}
-// GET ALL NOTIFICATION BY ROLES
-
-
-// GET CURRENT NOTIFICATION
-async getById(id: number) {
-    const now = new Date();
-    const notifications = await this.prismaService.notification.findMany({
-        where: {
-            AND: [
-                { recipientId: id.toString() },
-                {
-                    OR: [
-                        { trigerAt: null },
-                        { trigerAt: { lte: now } }, // Check for trigerAt <= now
-                    ],
-                },
-            ],
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        select: {
-            recipientId: true,
-            id: true,
-            content: true,
-            category: true,
-            trigerAt: true,
-        },
+    const notificationData = await this.prismaService.notification.findMany({
+      where: {
+        ...searchFilter,
+      },
+      skip,
+      take,
+      orderBy: {
+        [sortByField as string]: sort_direction === "asc" ? "asc" : "desc",
+      },
     });
-    
-    // Reset trigerAt if notifications are triggered
-    const triggeredNotifications = notifications.filter(n => n.trigerAt && new Date(n.trigerAt) <= now);
-    for (const notification of triggeredNotifications) {
-        await this.prismaService.notification.update({
-            where: { id: notification.id },
-            data: { trigerAt: null }, // Reset the trigerAt after it is triggered
-        });
+
+    const totalNotifications = await this.prismaService.notification.count({
+      where: {
+        ...searchFilter,
+      },
+    });
+
+    const dataObject = {
+      data: notificationData,
+      meta: {
+        page: parseInt(page as string, 10),
+        per_page: take,
+        total: totalNotifications,
+        total_pages: Math.ceil(totalNotifications / take),
+      },
+    };
+    return dataObject;
+  }
+  // GET ALL NOTIFICATION BY ROLED USERS
+
+  // GET ALL NOTIFICATION FOR  USERS
+  async getAllNotification(req: Request) {
+    const user = await this.userService.getCurrentUser(req);
+    if (!user) {
+      throw new UnauthorizedException("Unauthorized");
     }
-    
-    return notifications;
-}
-// GET CURRENT NOTIFICATION
+    const userId = user.id.toString();
+    const notificationData = await this.prismaService.notification.findMany({
+      where: {
+        recipientId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
+    const dataObject = {
+      data: notificationData,
+    };
+    return dataObject;
+  }
+  // GET ALL NOTIFICATION FOR  USERS
 
-// CREATE notification by ADMIN
-async createNotification(req:Request, data:CreateNotificationDto) {    
-    const {recipientId , content , category,readAt,trigerAt} = data;
-    const notification = await this.prismaService.notification.create({
-        data: {
-              recipientId,
-              content,
-              category,
-              readAt,
-              trigerAt,
-            },
+  // GET CURRENT NOTIFICATION
+  async getById(id: string, req: Request) {
+    const user = await this.userService.getCurrentUser(req);
+    if (!user) {
+      throw new UnauthorizedException("Unauthorized");
+    }
+
+    const parsedId = parseInt(id);
+
+    const notification = await this.prismaService.notification.findFirst({
+      where: { id: parsedId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification with ID ${id} not found`);
+    }
+
+    return notification;
+  }
+
+  // GET CURRENT NOTIFICATION
+
+  // CREATE notification by ADMIN
+  async createNotification(req: Request, data: CreateNotificationDto) {
+    const { recipientIds, content, category, readAt, trigerAt } = data;
+
+    if (!recipientIds || recipientIds.length === 0) {
+      throw new Error("Recipient IDs are required");
+    }
+
+    const notifications = await Promise.all(
+      recipientIds.map(async (recipientId) => {
+        const recipientIdString = String(recipientId);
+        const notification = await this.prismaService.notification.create({
+          data: {
+            recipientId: recipientIdString,
+            content,
+            category,
+            readAt: readAt ? new Date(readAt) : null,
+            trigerAt: trigerAt ? new Date(trigerAt) : null,
+          },
         });
 
         if (!trigerAt || new Date(trigerAt) <= new Date()) {
-            this.notifiGatewey.sendNotification(recipientId, notification);
+          this.notifiGatewey.sendNotification(recipientId, notification);
         }
-        const dates = new Date();
-        return notification ;
+
+        return notification;
+      }),
+    );
+
+    return notifications;
+  }
+
+  // CREATE notification by ADMIN
+
+  // DELETE notification by user
+  async removeNotification(id: string) {
+    try {
+      // Convert the id to an integer
+      const parseIntId = parseInt(id);
+
+      // Check if the provided id is a valid number
+      if (isNaN(parseIntId)) {
+        throw new Error("Invalid notification ID");
+      }
+
+      // Find the notification by id
+      const findNotification = await this.prismaService.notification.findUnique({
+        where: { id: parseIntId },
+      });
+
+      // If notification not found, throw an error
+      if (!findNotification) {
+        throw new Error(`Notification with ID ${parseIntId} not found`);
+      }
+
+      // Delete the notification
+      await this.prismaService.notification.delete({
+        where: { id: parseIntId },
+      });
+
+      // Return success message after successful deletion
+      return { message: "Notification deleted successfully" };
+    } catch (error) {
+      // Handle errors and return appropriate message
+      throw new Error(`Failed to delete notification: ${error.message}`);
     }
-    
+  }
+  // DELETE notification by user
 
-    // READ notification by user
-    async readNotification(id: string) {
-        const updateData = await this.prismaService.notification.update({
-            where: {
-                id: parseInt(id),
-                readAt: null, 
-            },
-            data: {
-                readAt: new Date(),
-            },
-        });
+  // EDIT NOTIFICATION
+  async editNotification(id: string, req: Request, data: any) {
+    const { recipientIds, trigerAt, category, content } = data;
+    const user = await this.userService.getCurrentUser(req);
+    if (!user) {
+      throw new UnauthorizedException("Unauthorized");
+    }
 
-        return updateData;
-}
-// CREATE notification by ADMIN
-
-// DELETE notification by user
-async removeNotification(id: string) {
-    const removeFromDb = await this.prismaService.notification.delete({
-        where: {
-            id: parseInt(id),
-        },
+    const parsedId = parseInt(id);
+    const notification = await this.prismaService.notification.findFirst({
+      where: { id: parsedId },
     });
-    return removeFromDb;
+
+    if (!notification) {
+      throw new NotFoundException(`Notification with ID ${id} not found`);
+    }
+
+    const updatedNotification = await this.prismaService.notification.update({
+      where: { id: parsedId },
+      data: {
+        recipientId: recipientIds[0],
+        content: content,
+        trigerAt: trigerAt,
+        category: category,
+      },
+    });
+
+    // Notify the user via WebSocket if required
+    this.notifiGatewey.sendNotification(updatedNotification.recipientId, updatedNotification);
+
+    return updatedNotification;
+  }
+  // EDIT NOTIFICATION
+
+  // MARK AS READ
+  async markAsRead(notificationId: string) {
+    const notification = await this.prismaService.notification.findUnique({
+      where: { id: parseInt(notificationId) },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification with ID ${notificationId} not found`);
+    }
+
+    if (notification.readAt) {
+      return { message: "Notification is already marked as read" };
+    }
+
+    const updatedNotification = await this.prismaService.notification.update({
+      where: { id: parseInt(notificationId) },
+      data: {
+        readAt: new Date(),
+      },
+    });
+
+    // Notify the user via WebSocket if required
+    this.notifiGatewey.sendNotification(updatedNotification.recipientId, updatedNotification);
+
+    return { message: "Notification marked as read", notification: updatedNotification };
+  }
+  // MARK AS READ
 }
-}
-// DELETE notification by user
