@@ -90,7 +90,7 @@ export class NotificationService {
     if (!user) {
       throw new UnauthorizedException("Unauthorized");
     }
-    const userId = user.id.toString();
+    const userId = user.data.id.toString();
     const notificationData = await this.prismaService.notification.findMany({
       where: {
         recipientId: userId,

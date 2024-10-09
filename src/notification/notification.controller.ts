@@ -11,6 +11,7 @@ export class NotificationController {
 
   //GET ALL NOTIFICATION FOR USER
   @Get()
+  @Roles(Role.GUEST, Role.ADMIN, Role.SUPER_ADMIN)
   async getAllNotification(@Req() req: Request) {
     return this.notificationService.getAllNotification(req);
   }
