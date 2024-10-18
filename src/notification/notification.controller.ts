@@ -47,7 +47,7 @@ export class NotificationController {
 
   // CREATE NOTIFICATION BY ACCESS ROLED USERS
   @Post("/create")
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.SUPPORT)
+  // @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.SUPPORT)
   async createNotification(@Req() req: Request, @Body() data: CreateNotificationDto) {
     return this.notificationService.createNotification(req, data);
   }
@@ -55,14 +55,14 @@ export class NotificationController {
 
   // REMOVE NOTIFICATION BY ACCESS ROLED USERS
   @Delete(":id")
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  // @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.GUEST, Role.SUPPORT)
   async removeNotification(@Param("id") id: string) {
     return this.notificationService.removeNotification(id);
   }
   // REMOVE NOTIFICATION BY ACCESS ROLED USERS
 
   //MARK AS READ
-  @Roles(Role.ADMIN, Role.GUEST, Role.SUPER_ADMIN, Role.SUPPORT)
+  // @Roles(Role.ADMIN, Role.GUEST, Role.SUPER_ADMIN, Role.SUPPORT)
   @Patch(":id/read")
   async markAsRead(@Param("id") id: string) {
     return this.notificationService.markAsRead(id);

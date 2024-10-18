@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "src/db/prisma.service";
-import { NotifiGateway } from "../gatewey/notifi.gatewey";
+import { NotifiGateway } from "../notifi.gateway";
 
 @Injectable()
 export class NotificationTasks {

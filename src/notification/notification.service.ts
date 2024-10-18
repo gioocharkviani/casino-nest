@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { CreateNotificationDto } from "./dto/createnotifi.dto";
-import { NotifiGateway } from "./gatewey/notifi.gatewey";
+import { NotifiGateway } from "./notifi.gateway";
 import { Request } from "express";
 import { UserService } from "src/user/user.service";
 import { Role } from "src/auth/enums/roles.enum";
@@ -131,7 +131,7 @@ export class NotificationService {
 
   // CREATE notification by ADMIN
   async createNotification(req: Request, data: CreateNotificationDto) {
-    const { recipientIds, content, category, readAt, trigerAt } = data;
+    const { recipientIds, content, category, readAt, trigerAt, title } = data;
 
     if (!recipientIds || recipientIds.length === 0) {
       throw new Error("Recipient IDs are required");
@@ -143,6 +143,7 @@ export class NotificationService {
         const notification = await this.prismaService.notification.create({
           data: {
             recipientId: recipientIdString,
+            title,
             content,
             category,
             readAt: readAt ? new Date(readAt) : null,
@@ -188,8 +189,7 @@ export class NotificationService {
       await this.prismaService.notification.delete({
         where: { id: parseIntId },
       });
-
-      // Return success message after successful deletion
+      this.notifiGatewey.handleRemoveNotification(findNotification.recipientId, findNotification);
       return { message: "Notification deleted successfully" };
     } catch (error) {
       // Handle errors and return appropriate message
@@ -254,8 +254,8 @@ export class NotificationService {
     });
 
     // Notify the user via WebSocket if required
-    this.notifiGatewey.sendNotification(updatedNotification.recipientId, updatedNotification);
-
+    this.notifiGatewey.markAsReadNotification(updatedNotification.recipientId, updatedNotification);
+    console.log("im here");
     return { message: "Notification marked as read", notification: updatedNotification };
   }
   // MARK AS READ

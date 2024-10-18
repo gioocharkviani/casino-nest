@@ -9,6 +9,9 @@ export class CreateNotificationDto {
   @IsString()
   content: string;
 
+  @IsString()
+  title: string;
+
   @IsOptional()
   @IsEnum(notifiCategory)
   category?: notifiCategory;
