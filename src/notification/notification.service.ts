@@ -255,7 +255,6 @@ export class NotificationService {
 
     // Notify the user via WebSocket if required
     this.notifiGatewey.markAsReadNotification(updatedNotification.recipientId, updatedNotification);
-    console.log("im here");
     return { message: "Notification marked as read", notification: updatedNotification };
   }
   // MARK AS READ
