@@ -189,6 +189,7 @@ export class NotificationService {
       await this.prismaService.notification.delete({
         where: { id: parseIntId },
       });
+      // console.log("ninucha is gabrazebuli here");
       this.notifiGatewey.handleRemoveNotification(findNotification.recipientId, findNotification);
       return { message: "Notification deleted successfully" };
     } catch (error) {

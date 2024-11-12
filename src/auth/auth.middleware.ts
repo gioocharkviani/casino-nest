@@ -10,14 +10,12 @@ export class AuthMiddleware implements NestMiddleware {
     try {
       // Get the authorization token from the request header
       const token = req.headers.authorization;
-
       if (!token) {
         throw new UnauthorizedException("Token not provided");
       }
 
       // Fetch the current user using the token
       const user = await this.userService.getCurrentUser(req);
-
       if (!user) {
         throw new UnauthorizedException("Invalid token or unauthorized user");
       }
