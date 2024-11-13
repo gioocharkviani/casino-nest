@@ -44,6 +44,8 @@ export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Method to send notifications to a specific user
   sendNotification(userId: string, notification: any) {
     const currenClient = this.clients.get("userId");
-    currenClient.emit("notification", notification);
+    if (currenClient) {
+      currenClient.emit("notification", notification);
+    }
   }
 }

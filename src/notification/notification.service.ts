@@ -145,9 +145,9 @@ export class NotificationService {
           },
         });
 
-        await this.notifiGatewey.sendNotification(recipientId, notification);
-        // if (!trigerAt || new Date(trigerAt) <= new Date()) {
-        // }
+        if (trigerAt == null || new Date(trigerAt) <= new Date()) {
+          this.notifiGatewey.sendNotification(recipientId, notification);
+        }
 
         return notification;
       }),
