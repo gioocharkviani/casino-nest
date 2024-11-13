@@ -1,22 +1,16 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { CreateNotificationDto } from "./dto/createnotifi.dto";
 import { NotifiGateway } from "./notifi.gateway";
 import { Request } from "express";
 import { UserService } from "src/user/user.service";
-import { Role } from "src/auth/enums/roles.enum";
 
 @Injectable()
 export class NotificationService {
   constructor(
-    private readonly prismaService: PrismaService,
-    private readonly notifiGatewey: NotifiGateway,
-    private readonly userService: UserService,
+    private prismaService: PrismaService,
+    private notifiGatewey: NotifiGateway,
+    private userService: UserService,
   ) {}
 
   // GET ALL NOTIFICATION BY ROLED USERS
@@ -151,9 +145,9 @@ export class NotificationService {
           },
         });
 
-        if (!trigerAt || new Date(trigerAt) <= new Date()) {
-          this.notifiGatewey.sendNotification(recipientId, notification);
-        }
+        await this.notifiGatewey.sendNotification(recipientId, notification);
+        // if (!trigerAt || new Date(trigerAt) <= new Date()) {
+        // }
 
         return notification;
       }),
@@ -189,8 +183,7 @@ export class NotificationService {
       await this.prismaService.notification.delete({
         where: { id: parseIntId },
       });
-      // console.log("ninucha is gabrazebuli here");
-      this.notifiGatewey.handleRemoveNotification(findNotification.recipientId, findNotification);
+
       return { message: "Notification deleted successfully" };
     } catch (error) {
       // Handle errors and return appropriate message
@@ -254,8 +247,6 @@ export class NotificationService {
       },
     });
 
-    // Notify the user via WebSocket if required
-    this.notifiGatewey.markAsReadNotification(updatedNotification.recipientId, updatedNotification);
     return { message: "Notification marked as read", notification: updatedNotification };
   }
   // MARK AS READ
