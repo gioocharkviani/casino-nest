@@ -46,6 +46,7 @@ export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const currenClient = this.clients.get("userId");
     if (currenClient) {
       currenClient.emit("notification", notification);
+    } else {
     }
   }
 }

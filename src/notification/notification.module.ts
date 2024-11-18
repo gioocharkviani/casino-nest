@@ -9,7 +9,7 @@ import { NotifiGateway } from "./notifi.gateway";
 
 @Module({
   imports: [PrismaModule, ScheduleModule.forRoot()],
-  providers: [UserService, NotificationService, NotificationTasks, NotifiGateway], // Ensure all services are provided
+  providers: [UserService, NotificationService, NotificationTasks, NotifiGateway],
   controllers: [NotificationController],
 })
 export class NotificationModule {}
