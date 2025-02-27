@@ -21,24 +21,21 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user = await this.userService.getCurrentUser(request);
+    const req = context.switchToHttp().getRequest();
+    const user = await this.userService.getCurrentUser({ req });
 
-    // If user is not authenticated, throw unauthorized exception.
     if (!user) {
       throw new UnauthorizedException("Unauthorized");
     }
 
-    // Check if user has no roles assigned, assign default role 'guest'
     const userRoles =
       user.data.roles.length === 0 ? ["GUEST"] : user.data.roles.map((role: any) => role);
-    // Check if the user has at least one of the required roles
     const hasRole = () => userRoles.some((role: string) => roles.includes(role));
 
     if (!hasRole()) {
       throw new ForbiddenException(`Access denied. Required roles: ${roles.join(", ")}`);
     }
 
-    return true; // Allow access if the user has at least one of the required roles
+    return true;
   }
 }

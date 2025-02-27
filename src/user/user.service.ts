@@ -3,9 +3,11 @@ import { Request } from "express";
 
 @Injectable()
 export class UserService {
-  //GET CURRENT USER
-  async getCurrentUser(req: Request) {
-    const token = req.headers.authorization;
+  // GET CURRENT USER
+  async getCurrentUser({ req, userToken }: { req?: Request; userToken?: string }) {
+    const token = userToken ? userToken : req.headers.authorization;
+    console.log(token);
+
     if (!token) {
       throw new UnauthorizedException("Token not provided");
     }
@@ -16,18 +18,20 @@ export class UserService {
       Accept: "application/json",
     };
 
-    // Make the API request using fetch
-    const response = await fetch("http://62.169.17.152:8010/api/user", {
-      method: "GET",
-      headers,
-    });
+    try {
+      // Make the API request using fetch
+      const response = await fetch("http://62.169.17.152:8010/api/user", {
+        method: "GET",
+        headers,
+      });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user data: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(`Error fetching user: ${error.message}`);
     }
-
-    const data = await response.json();
-    return data;
   }
-  //GET CURRENT USER
 }

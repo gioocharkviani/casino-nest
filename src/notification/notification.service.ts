@@ -15,7 +15,7 @@ export class NotificationService {
 
   // GET ALL NOTIFICATION BY ROLED USERS
   async getAllNotificationRoled(req: Request) {
-    const user = await this.userService.getCurrentUser(req);
+    const user = await this.userService.getCurrentUser({ req });
     if (!user) {
       throw new UnauthorizedException("Unauthorized");
     }
@@ -80,7 +80,7 @@ export class NotificationService {
 
   // GET ALL NOTIFICATION FOR  USERS
   async getAllNotification(req: Request) {
-    const user = await this.userService.getCurrentUser(req);
+    const user = await this.userService.getCurrentUser({ req });
     if (!user) {
       throw new UnauthorizedException("Unauthorized");
     }
@@ -103,7 +103,7 @@ export class NotificationService {
 
   // GET CURRENT NOTIFICATION
   async getById(id: string, req: Request) {
-    const user = await this.userService.getCurrentUser(req);
+    const user = await this.userService.getCurrentUser({ req });
     if (!user) {
       throw new UnauthorizedException("Unauthorized");
     }
@@ -195,7 +195,7 @@ export class NotificationService {
   // EDIT NOTIFICATION
   async editNotification(id: string, req: Request, data: any) {
     const { recipientIds, trigerAt, category, content } = data;
-    const user = await this.userService.getCurrentUser(req);
+    const user = await this.userService.getCurrentUser({ req });
     if (!user) {
       throw new UnauthorizedException("Unauthorized");
     }

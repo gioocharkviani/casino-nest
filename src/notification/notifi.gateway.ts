@@ -6,6 +6,7 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
+import { UserService } from "src/user/user.service";
 
 @WebSocketGateway({
   namespace: "notification",
@@ -14,39 +15,75 @@ import { Server, Socket } from "socket.io";
   },
 })
 export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  constructor(private userService: UserService) {}
+
   @WebSocketServer()
   server: Server;
 
-  private clients = new Map<string, Socket>();
+  private clients = new Map<string, Socket>(); // User ID -> Socket
+  private socketToUser = new Map<string, string>(); // Socket ID -> User ID
 
   // Handle new client connections
-  handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    if (userId) {
-      this.clients.set("userId", client);
+  async handleConnection(client: Socket) {
+    try {
+      const token = client.handshake.headers?.authorization;
+
+      if (!token) {
+        console.log("No token provided, disconnecting...");
+        client.disconnect();
+        return;
+      }
+
+      const user = await this.userService.getCurrentUser({ userToken: token });
+
+      if (!user.data || !user.data.id) {
+        console.log("Invalid token, disconnecting...");
+        client.disconnect();
+        return;
+      }
+      const userId = String(user.data.id);
+      this.clients.set(userId, client);
+      this.socketToUser.set(client.id, userId);
+      console.log(`Client connected: User ID = ${userId}, Socket ID = ${client.id}`);
+    } catch (error) {
+      console.log("Error in token validation, disconnecting...", error);
+      client.disconnect();
     }
-    console.log(`Client connected: ${userId}`);
   }
 
   // Handle client disconnections
   handleDisconnect(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    console.log(`Client disconnected: ${userId}`);
+    const userId = this.socketToUser.get(client.id);
+
+    if (userId) {
+      this.clients.delete(userId);
+      this.socketToUser.delete(client.id);
+      console.log(`Client disconnected: User ID = ${userId}, Socket ID = ${client.id}`);
+    } else {
+      console.log(`Unknown client disconnected: Socket ID = ${client.id}`);
+    }
   }
 
   @SubscribeMessage("message")
-  handleMessage() {
-    const user = this.clients.get("userId");
-    console.log(user);
-    return "testing";
+  handleMessage(client: Socket) {
+    const userId = this.socketToUser.get(client.id);
+    console.log(`Message received from User ID = ${userId}, Socket ID = ${client.id}`);
+    return "Message received";
   }
 
-  // Method to send notifications to a specific user
+  // Send notifications to a specific user
   sendNotification(userId: string, notification: any) {
-    const currenClient = this.clients.get("userId");
-    if (currenClient) {
-      currenClient.emit("notification", notification);
+    const currentClient = this.clients.get(userId);
+    if (currentClient) {
+      currentClient.emit("notification", notification);
+      console.log(`Notification sent to User ID = ${userId}`);
     } else {
+      console.log(`User ${userId} is not connected`);
     }
+  }
+
+  // Get real user ID from socket ID
+  getUserIdFromSocketId(socketId: string): string | undefined {
+    return this.socketToUser.get(socketId);
   }
 }
