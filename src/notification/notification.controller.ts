@@ -48,8 +48,8 @@ export class NotificationController {
   // CREATE NOTIFICATION BY ACCESS ROLED USERS
   @Post("/create")
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.SUPPORT)
-  async createNotification(@Req() req: Request, @Body() data: CreateNotificationDto) {
-    return this.notificationService.createNotification(req, data);
+  async createNotification(@Body() data: CreateNotificationDto) {
+    return this.notificationService.createNotification(data);
   }
   // CREATE NOTIFICATION BY ACCESS ROLED USERS
 

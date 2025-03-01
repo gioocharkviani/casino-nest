@@ -124,7 +124,7 @@ export class NotificationService {
   // GET CURRENT NOTIFICATION
 
   // CREATE notification by ADMIN
-  async createNotification(req: Request, data: CreateNotificationDto) {
+  async createNotification(data: CreateNotificationDto) {
     const { recipientIds, content, category, readAt, trigerAt, title } = data;
 
     if (!recipientIds || recipientIds.length === 0) {

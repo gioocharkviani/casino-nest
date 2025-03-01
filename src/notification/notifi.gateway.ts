@@ -20,7 +20,7 @@ export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private clients = new Map<string, Socket>(); // User ID -> Socket
+  private clients = new Map<string, Socket>();
   private socketToUser = new Map<string, string>(); // Socket ID -> User ID
 
   // Handle new client connections
