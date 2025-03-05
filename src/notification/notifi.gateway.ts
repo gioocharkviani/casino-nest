@@ -13,6 +13,7 @@ import { UserService } from "src/user/user.service";
   cors: {
     origin: "*",
   },
+  transports: ["websocket", "polling"],
 })
 export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private userService: UserService) {}
@@ -26,7 +27,7 @@ export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Handle new client connections
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.headers?.authorization;
+      const token = `Bearer ${client.handshake.headers?.authorization}`;
 
       if (!token) {
         console.log("No token provided, disconnecting...");
@@ -74,6 +75,7 @@ export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Send notifications to a specific user
   sendNotification(userId: string, notification: any) {
     const currentClient = this.clients.get(userId);
+    console.log(currentClient);
     if (currentClient) {
       currentClient.emit("notification", notification);
       console.log(`Notification sent to User ID = ${userId}`);
