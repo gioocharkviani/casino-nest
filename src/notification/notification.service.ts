@@ -35,10 +35,6 @@ export class NotificationService {
     const take = parseInt(per_page as string, 10);
     const skip = (parseInt(page as string, 10) - 1) * take;
 
-    const { ip } = req;
-
-    const ADMIN_FRONT_IP = "*";
-
     const searchFilter = search
       ? {
           OR: [
