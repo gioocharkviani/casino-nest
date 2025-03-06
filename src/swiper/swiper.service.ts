@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { CreateSwiperComponentDto } from "./dto/createSwiper.dto";
 import { PrismaService } from "src/db/prisma.service";
+import { Response } from "express";
+import { join } from "path";
 
 @Injectable()
 export class SwiperService {
@@ -71,5 +73,11 @@ export class SwiperService {
     } catch (error) {
       throw new NotFoundException(`Swiper component with ID ${id} not found`);
     }
+  }
+
+  //getCurrentImage
+  async getSwiperImage(imageName: string, res: Response) {
+    const filePath = join(process.cwd(), "uploads", imageName);
+    res.sendFile(filePath);
   }
 }

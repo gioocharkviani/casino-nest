@@ -42,9 +42,7 @@ export class UploadController {
       throw new BadRequestException("Invalid file upload");
     }
     const baseUrl = `${req.protocol}://${req.get("host")}`;
-    const filePath = `/uploads/${file.filename}`;
-    const fullImageUrl = `${baseUrl}${filePath}`;
-
+    const fullImageUrl = `${baseUrl}/api/swiper/${file.filename}`;
     return {
       message: "File uploaded successfully!",
       imageUrl: fullImageUrl,

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res, Response } from "@nestjs/common";
 import { SwiperService } from "./swiper.service";
 import { CreateSwiperComponentDto } from "./dto/createSwiper.dto";
 import { Roles } from "src/auth/decorators/roles.decorator";
@@ -21,7 +21,12 @@ export class SwiperController {
   async getAllSwiperLinks() {
     return this.swiperService.getAllSwiperLinks();
   }
-  //GET ALL SWIPER COMPONENTS\
+  //GET ALL SWIPER COMPONENTS
+
+  @Get(":imageName")
+  async getSwiperImage(@Param("imageName") imageName: string, @Response() res) {
+    return this.swiperService.getSwiperImage(imageName, res);
+  }
 
   //GET ALL SWIPER COMPONENTS
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)

@@ -23,6 +23,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
+      .exclude({ path: "api/swiper/:imageName", method: RequestMethod.GET })
       .forRoutes(
         { path: "api/swiper/create", method: RequestMethod.POST },
         { path: "api/swiper/update/:id", method: RequestMethod.PATCH },
