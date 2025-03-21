@@ -22,7 +22,7 @@ export class NotifiGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private clients = new Map<string, Socket>();
-  private socketToUser = new Map<string, string>(); // Socket ID -> User ID
+  private socketToUser = new Map<string, string>();
 
   // Handle new client connections
   async handleConnection(client: Socket) {
