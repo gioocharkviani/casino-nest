@@ -23,6 +23,14 @@ export class SwiperController {
   }
   //GET ALL SWIPER COMPONENTS
 
+  //GET ALL SWIPER COMPONENTS FOR ADMIN
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Get("getAllAdmin")
+  async getAllSwiperFroAdmin() {
+    return this.swiperService.getAllSwiperForAdmin();
+  }
+  //GET ALL SWIPER COMPONENTS FOR ADMIN
+
   @Get(":imageName")
   async getSwiperImage(@Param("imageName") imageName: string, @Response() res) {
     return this.swiperService.getSwiperImage(imageName, res);

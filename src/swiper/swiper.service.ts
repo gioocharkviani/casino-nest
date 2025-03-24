@@ -41,6 +41,24 @@ export class SwiperService {
       throw new NotFoundException("Error fetching swiper links");
     }
   }
+  // Get all swiper links for Admin
+  async getAllSwiperForAdmin() {
+    try {
+      const getData = await this.prismaService.swiper.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      if (!getData || getData.length === 0) {
+        throw new NotFoundException("No swiper links found");
+      }
+
+      return getData;
+    } catch (error) {
+      throw new NotFoundException("Error fetching swiper links");
+    }
+  }
 
   // Edit Swiper Component
   async editAllSwiperLinks(id: string, body: CreateSwiperComponentDto) {
